@@ -1,0 +1,28 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ] # main 브랜치에 코드가 푸시되면 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 서버에 접속해서 index.html 내용을 업데이트하는 명령어
+      - name: Deploy to EC2
+        run: |
+          aws ssm send-command \
+            --instance-ids "i-04bdba97240b4c55d" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["echo \"<h1>Update from GitHub Actions!</h1>\" | sudo tee /var/www/html/index.html"]' \
+            --region ap-northeast-2
